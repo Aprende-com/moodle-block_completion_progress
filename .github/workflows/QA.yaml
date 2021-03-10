@@ -1,8 +1,8 @@
 name: QA Pipeline
-on:
-  pull_request:
-    types: [closed]
-    branches: qa
+on: push
+  #pull_request:
+   # types: [closed]
+    #branches: qa
 env:
   ISSUEID: ${{ github.head_ref }}
 jobs:
