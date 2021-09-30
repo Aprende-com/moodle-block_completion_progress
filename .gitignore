@@ -1,1 +1,4 @@
 /phpunit.xml
+
+# Grunt is run at build time so there's no need to push this anymore
+amd/build
