@@ -1,0 +1,82 @@
+---  # 2021 11 11
+
+name: "PHPUnit"
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+env: 
+  PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # required for slack-notify
+  MOODLE_DEV_BRANCH: aprende_3101_dev
+
+jobs:
+  phpunit:
+    name: "PHPUnit"
+    runs-on: long-distance-runner
+    if: "!contains(github.event.commits[0].message, '[skip ci]')"
+
+    steps:
+
+      - name: "Clone devops repository"
+        uses: actions/checkout@v2
+        with:
+          repository: Aprende-com/devops
+          ref: main
+          path: devops
+          token: ${{ env.PERSONAL_ACCESS_TOKEN }}
+
+      - name: "Get fresh mysql endpoint"
+        timeout-minutes: 1      
+        uses: ./devops/actions/docker-mysql
+        id: docker_mysql
+        with:
+          user: moodle_user
+          pass: moodle_pass
+          database: moodle_db
+
+      - name: "Setup phpunit image"
+        uses: ./devops/moodle-dev/actions/phpunit-setup
+        id: phpunit_setup
+        with:
+          plugin_repo: ${{ github.repository }}
+          plugin_ref: ${{ github.ref }}
+          moodle_branch: ${{ env.MOODLE_DEV_BRANCH }}
+
+      - name: "Start idle moodle-phpunit container"
+        id: docker_moodle
+        run: |
+          CONTAINER=$(docker run --rm --detach \
+            --entrypoint sleep \
+            "${{ steps.phpunit_setup.outputs.image }}" infinity)
+
+          echo "::set-output name=container::${CONTAINER}"
+
+      - name: "Run phpunit"
+        uses: ./devops/moodle-dev/actions/phpunit-run
+        with:
+          container: ${{ steps.docker_moodle.outputs.container }}
+          mysql_endpoint: ${{ steps.docker_mysql.outputs.endpoint }}
+
+      - name: "Extract Report"
+        uses: ./devops/moodle-dev/actions/phpunit-report
+        id: report
+        if: always()
+        with:
+          container: ${{ steps.docker_moodle.outputs.container }}
+
+      - name: "Clean up"
+        if: always()
+        run: |
+          docker stop "${{ steps.docker_mysql.outputs.container }}" || echo "Warning: Failed to stop mysql"
+          docker stop "${{ steps.docker_moodle.outputs.container }}" || echo "Warning: Failed to stop ${{ inputs.container }}"
+
+      - uses: ./devops/actions/slack-notify
+        if: always()
+        with:
+          actor: "${{ github.actor }}"
+          title: "PHPUnit for <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.head_commit_message }}>: ${{ job.status }}"
+          status: "${{ job.status }}"
+          text: "See <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow> <${{ steps.report.outputs.report_url }}|Report>"
