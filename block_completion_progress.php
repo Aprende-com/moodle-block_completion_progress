@@ -70,7 +70,7 @@ class block_completion_progress extends block_base {
      * @return bool
      */
     public function instance_allow_multiple() {
-        return !block_completion_progress_on_site_page();
+        return false;
     }
 
     /**
