@@ -1,4 +1,4 @@
----  # 2021 11 11
+---  # 2021 12 14
 
 name: "PHPUnit"
 on:
@@ -24,14 +24,14 @@ jobs:
       - name: "Clone devops repository"
         uses: actions/checkout@v2
         with:
-          repository: Aprende-com/devops
+          repository: Aprende-com/devops-actions
           ref: main
-          path: devops
+          path: devops-actions
           token: ${{ env.PERSONAL_ACCESS_TOKEN }}
 
       - name: "Get fresh mysql endpoint"
         timeout-minutes: 1      
-        uses: ./devops/actions/docker-mysql
+        uses: ./devops-actions/docker-mysql
         id: docker_mysql
         with:
           user: moodle_user
@@ -74,7 +74,7 @@ jobs:
           docker stop "${{ steps.docker_mysql.outputs.container }}" || echo "Warning: Failed to stop mysql"
           docker stop "${{ steps.docker_moodle.outputs.container }}" || echo "Warning: Failed to stop ${{ inputs.container }}"
 
-      - uses: ./devops/actions/slack-notify
+      - uses: ./devops-actions/slack-notify
         if: always()
         with:
           actor: "${{ github.actor }}"
