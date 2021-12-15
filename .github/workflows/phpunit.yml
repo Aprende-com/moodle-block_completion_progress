@@ -39,7 +39,7 @@ jobs:
           database: moodle_db
 
       - name: "Setup phpunit image"
-        uses: ./devops/moodle-dev/actions/phpunit-setup
+        uses: ./devops-actions/moodle-dev/phpunit-setup
         id: phpunit_setup
         with:
           plugin_repo: ${{ github.repository }}
@@ -56,13 +56,13 @@ jobs:
           echo "::set-output name=container::${CONTAINER}"
 
       - name: "Run phpunit"
-        uses: ./devops/moodle-dev/actions/phpunit-run
+        uses: ./devops-actions/moodle-dev/phpunit-run
         with:
           container: ${{ steps.docker_moodle.outputs.container }}
           mysql_endpoint: ${{ steps.docker_mysql.outputs.endpoint }}
 
       - name: "Extract Report"
-        uses: ./devops/moodle-dev/actions/phpunit-report
+        uses: ./devops-actions/moodle-dev/phpunit-report
         id: report
         if: always()
         with:
