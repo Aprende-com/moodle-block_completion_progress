@@ -11,7 +11,7 @@ on:
 env: 
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # required for slack-notify
-  MOODLE_DEV_BRANCH: aprende_3101_dev
+  MOODLE_DEV_BRANCH: aprende_31104_dev
 
 jobs:
   phpunit:
