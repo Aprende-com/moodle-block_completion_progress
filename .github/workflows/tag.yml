@@ -1,10 +1,9 @@
----  # 2022 04 18
+---  # 2022 04 27
 
-name: "Tag"
+name: "Tag 2 Docker"
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   trigger:
@@ -19,5 +18,5 @@ jobs:
           client-payload: |
             {
               "repository": "${{ github.repository }}",
-              "ref": "${{ github.ref }}",
+              "ref": "${{ github.ref }}"
             }
