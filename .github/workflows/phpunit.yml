@@ -38,8 +38,8 @@ jobs:
           token: ${{ env.GITHUB_TOKEN }}
 
       - run: |
-          echo "PLUGIN_REPO=$GITHUB_HEAD_REF" | tee -a "${GITHUB_ENV}"
-          echo "PLUGIN_REF=$GITHUB_REPOSITORY" | tee -a "${GITHUB_ENV}"
+          echo "PLUGIN_REPO=$GITHUB_REPOSITORY" | tee -a "${GITHUB_ENV}"
+          echo "PLUGIN_REF=$GITHUB_HEAD_REF" | tee -a "${GITHUB_ENV}"
 
       - uses: ./devops-actions/lms/plugin-getpath
 
