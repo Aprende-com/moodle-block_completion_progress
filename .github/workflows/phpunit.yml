@@ -25,7 +25,7 @@ jobs:
     steps:
 
       - name: "devops: checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: Aprende-com/devops-actions
           path: devops-actions
@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: "devops: checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: Aprende-com/devops-actions
           path: devops-actions
@@ -68,13 +68,25 @@ jobs:
         with:
           submodules: true  
 
-      - name: "plugin: clone"
-        uses: actions/checkout@v2
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          repository: ${{ env.PLUGIN_REPO }}
-          path: moodle-dev/${{ env.PLUGIN_PATH }}
-          ref: ${{ env.PLUGIN_REF }}
+      - name: "get submodule paths"
+        shell: bash
+        run: |
+          cd "${MOODLE_LOCAL}"       
+          SUBMODULES_PATH=$(git submodule foreach pwd | grep -oP "(?<=')[^']+(?=')")
+          SUBMODULES_PATH=$(echo ${SUBMODULES_PATH})  # Remove newlines
+          echo "SUBMODULES_PATH=${SUBMODULES_PATH}" | tee -a "${GITHUB_ENV}"
+      
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          cd moodle-dev
+          for SUBMODULES_PATH in ${SUBMODULES_PATH}; do
+            cd "${SUBMODULES_PATH}"
+            pwd
+            git status
+            git checkout ${{ env.PLUGIN_REF }} || true
+            cd - > /dev/null
+          done
 
       - name: "plugin: run composer"
         uses: ./devops-actions/lms/plugin/composer
