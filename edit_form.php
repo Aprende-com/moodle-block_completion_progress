@@ -58,8 +58,9 @@ class block_completion_progress_edit_form extends block_edit_form {
         $mform->setDefault('config_showpercentage', DEFAULT_COMPLETIONPROGRESS_SHOWPERCENTAGE);
         $mform->addHelpButton('config_showpercentage', 'why_show_precentage', 'block_completion_progress');
 
-        $mform->addElement('hidden', 'config_activitiesincluded', $activitieslabel);
+        $mform->addElement('hidden', 'config_activitiesincluded', '');
         $mform->setDefault('config_activitiesincluded', DEFAULT_COMPLETIONPROGRESS_ACTIVITIESINCLUDED);
+        $mform->setType('config_activitiesincluded', PARAM_RAW);
 
         // Check that there are activities to monitor.
         if (empty($activities)) {
@@ -72,15 +73,11 @@ class block_completion_progress_edit_form extends block_edit_form {
                 $activitiestoinclude[$activity['type'].'-'.$activity['instance']] = $activity['name'];
             }
 
-            $mform->addHelpButton('config_selectactivities', 'how_selectactivities_works', 'block_completion_progress');
-
             $options = array(
                 'multiple' => true
             );
             $selectactivitieslabel = get_string('config_selectactivities', 'block_completion_progress');
             $mform->addElement('autocomplete', 'config_selectactivities', $selectactivitieslabel , $activitiestoinclude, $options);
-
-
         }
     }
 }
