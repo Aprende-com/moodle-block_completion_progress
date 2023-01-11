@@ -33,3 +33,8 @@ $string['privacy:metadata'] = 'El bloque de barra de progreso solo muestra infor
 $string['selectitem'] = 'Seleccionar \'{$a}\'';
 $string['why_show_precentage'] = '¿Por qué mostrar una barra de progreso a los estudiantes?';
 $string['why_show_precentage_help'] = '<p>Es posible mostrar un porcentaje de progreso a los estudiantes.</p><p>Este es calculado dividiendo el número de actividades completadas por el número total de actividades seleccionadas.</p>';
+
+// Acess API.
+$string['completion_progress:addinstance'] = 'Agregar un nuevo bloque de Progreso de Finalizacion';
+$string['completion_progress:myaddinstance'] = 'Agregar un nuevo bloque de Progreso de Finalizacion al Tablero';
+$string['completion_progress:overview'] = 'Ver la vista general';

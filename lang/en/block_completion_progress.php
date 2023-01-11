@@ -40,3 +40,8 @@ $string['submitted'] = '';
 $string['showallinfo'] = '';
 $string['mouse_over_prompt'] = '';
 $string['submittednotcomplete_colour'] = '';
+
+// Acess API.
+$string['completion_progress:addinstance'] = 'Add a new Completion Progress block';
+$string['completion_progress:myaddinstance'] = 'Add a new Completion Progress block to Dashboard';
+$string['completion_progress:overview'] = 'View the overwiew section';

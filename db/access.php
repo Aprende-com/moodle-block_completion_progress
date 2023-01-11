@@ -37,16 +37,6 @@ $capabilities = array (
         )
     ),
 
-    'block/completion_progress:showbar' => array (
-        'captype'       => 'read',
-        'contextlevel'  => CONTEXT_BLOCK,
-        'archetypes'    => array (
-            'teacher'           => CAP_ALLOW,
-            'editingteacher'    => CAP_ALLOW,
-            'student'           => CAP_ALLOW,
-        )
-    ),
-
     'block/completion_progress:addinstance' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
