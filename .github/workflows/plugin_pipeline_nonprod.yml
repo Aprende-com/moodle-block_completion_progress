@@ -57,7 +57,7 @@ jobs:
               "head_commit_message": "${{ env.HEAD_COMMIT_MESSAGE }}",
               "run_id": "${{ github.run_id }}",
               "run_number": "${{ github.run_number }}",
-              "actor": "${{ github.actor }}"
+              "actor": "${{ github.actor }}",
               "event_type": "single-plugin-pipeline-nonprod"
             }
 
