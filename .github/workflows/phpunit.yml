@@ -4,7 +4,7 @@ name: "PHPUnit"
 on:
   pull_request:
     paths-ignore:
-      - '.github/workflows/**'
+      - '.github/**'
     branches:
       - master
       - main

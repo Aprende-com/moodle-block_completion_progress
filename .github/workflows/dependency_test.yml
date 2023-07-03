@@ -4,7 +4,7 @@ name: "Plugin Dependency Version Validator"
 on:
   pull_request:
     paths-ignore:
-      - '.github/workflows/**'
+      - '.github/**'
     branches:
       - master
 

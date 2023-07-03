@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths-ignore:
-      - '.github/workflows/**'
+      - '.github/**'
     branches:
       - master
       - dev
