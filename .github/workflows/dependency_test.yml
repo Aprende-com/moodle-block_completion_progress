@@ -27,7 +27,7 @@ jobs:
     steps:
 
       - name: "devops: checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: Aprende-com/devops-actions
           path: devops-actions
@@ -62,14 +62,14 @@ jobs:
           echo "PLUGIN_REF=$GITHUB_HEAD_REF" | tee -a "${GITHUB_ENV}"
     
       - name: "moodle-dev: clone"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: Aprende-com/moodle-dev
           path: "moodle-dev"
           
       - name: "plugin: clone"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ env.PLUGIN_REPO }}
@@ -84,7 +84,7 @@ jobs:
           echo "PLUGIN_URLS=${PLUGIN_URLS}" | tee -a "${GITHUB_ENV}"
           
       - name: "devops-actions: checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: Aprende-com/devops-actions
           path: devops-actions

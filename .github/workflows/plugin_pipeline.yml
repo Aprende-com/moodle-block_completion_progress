@@ -1,4 +1,4 @@
----  # 2023 07 20
+---  # 2023 09 13
 
 name: "Single Plugin Pipeline Dispatch"
 on:
@@ -8,9 +8,6 @@ on:
       - '.github/**'
     branches:
       - master
-      - dev
-      - qa
-      - aprende_4005_dev
 
 env:
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # required
@@ -42,7 +39,7 @@ jobs:
           echo "ISSUE_ID=${ISSUE_ID}" | tee -a "${GITHUB_ENV}"
 
       - name: "Single Plugin Pipeline Dispatch"
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: Aprende-com/devops-workflows
@@ -75,7 +72,7 @@ jobs:
           
       - name: "devops-actions: checkout"
         if: always() && steps.prepare_environment.outcome == 'failure' 
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: Aprende-com/devops-actions
