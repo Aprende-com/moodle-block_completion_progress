@@ -1,4 +1,4 @@
----  # 2023 09 13
+---  # 2024 07 19
 
 name: "Single Plugin Pipeline Dispatch"
 on:
@@ -38,10 +38,17 @@ jobs:
           echo "SHA_SHORT=${SHA_SHORT}" | tee -a "${GITHUB_ENV}"
           echo "ISSUE_ID=${ISSUE_ID}" | tee -a "${GITHUB_ENV}"
 
+      - name: "Generate Github App Token"
+        uses: Aprende-com/devops-workflows/actions/generate-github-token@main
+        id: app-token
+        with:
+          secret_key: ${{ secrets.DEVOPS_APP_SECRET_KEY }}
+          app_id: ${{ secrets.DEVOPS_APP_ID }}
+
       - name: "Single Plugin Pipeline Dispatch"
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           repository: Aprende-com/devops-workflows
           event-type: "single-plugin-pipeline-${{ env.K8S_NAMESPACE }}"
           client-payload: |
@@ -59,7 +66,7 @@ jobs:
             }
 
       - name: "get variables for Slack notification"
-        if: always() && steps.prepare_environment.outcome == 'failure' 
+        if: failure()
         run: |
           # Generate VARIABLES
           K8S_NAMESPACE="${{ github.ref }}"
@@ -70,16 +77,8 @@ jobs:
           echo "SHA_SHORT=${SHA_SHORT}" | tee -a "${GITHUB_ENV}"
           echo "K8S_NAMESPACE=${K8S_NAMESPACE}" | tee -a "${GITHUB_ENV}"
           
-      - name: "devops-actions: checkout"
-        if: always() && steps.prepare_environment.outcome == 'failure' 
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          repository: Aprende-com/devops-actions
-          path: devops-actions
-
-      - uses: ./devops-actions/slack-notify
-        if: always() && steps.prepare_environment.outcome == 'failure' 
+      - uses: Aprende-com/devops-workflows/actions/slack-notify@main
+        if: failure()
         with:
           actor: "${{ github.actor }}"
           title: "<https://github.com/${{ github.repository }}/commit/${{ env.SHA_SHORT }}|Deployment> to [${{ env.K8S_NAMESPACE }}]: ${{ job.status }}"

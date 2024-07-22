@@ -1,4 +1,4 @@
---- # 2024 06 28
+--- # 2024 07 19
 
 name: 'Caller Workflows - Dependabot Jira Issue Creation'
 on:
@@ -21,13 +21,10 @@ jobs:
 
     steps:
 
-    - name: "Checkout"
-      uses: actions/checkout@v4
-
     - name: Set variables
       id: set_vars
       run: |
-        # Extract the team from CODEOWNERS file and the repository from github
+
         TEAM="moodle-dev"
         REPO=$(echo "${{ github.repository }}" | sed 's/^Aprende-com\///')
 
@@ -35,15 +32,7 @@ jobs:
         echo "repo=$REPO" >> $GITHUB_OUTPUT
         echo "team=$TEAM" >> $GITHUB_OUTPUT
 
-    - name: "devops-actions: checkout"
-      if: failure()
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        repository: Aprende-com/devops-actions
-        path: devops-actions
-
-    - uses: ./devops-actions/slack-notify
+    - uses: Aprende-com/devops-workflows/actions/slack-notify@main
       if: failure()
       with:
         title: "Dependabot Jira issue creation for ${{ github.event.pull_request.html_url }}/checks: Failed"
