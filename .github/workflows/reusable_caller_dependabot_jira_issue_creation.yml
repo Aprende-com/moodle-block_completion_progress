@@ -1,4 +1,4 @@
---- # 2024 07 19
+--- # 2024 07 25
 
 name: 'Caller Workflows - Dependabot Jira Issue Creation'
 on:
@@ -18,25 +18,128 @@ jobs:
     outputs:
       repository: ${{ steps.set_vars.outputs.repo }}
       team: ${{ steps.set_vars.outputs.team }}
+      type: ${{ steps.determine_type.outputs.TYPE }}
+      severity: ${{ steps.analyze_alerts.outputs.SEVERITY }}
+      priority: ${{ steps.determine_priority.outputs.PRIORITY }}
 
     steps:
 
-    - name: Set variables
-      id: set_vars
-      run: |
+      - name: Set variables
+        id: set_vars
+        run: |
+          TEAM="moodle-dev"
+          REPO=$(echo "${{ github.repository }}" | sed 's/^Aprende-com\///')
 
-        TEAM="moodle-dev"
-        REPO=$(echo "${{ github.repository }}" | sed 's/^Aprende-com\///')
+          # Set outputs
+          echo "team=$TEAM" >> $GITHUB_OUTPUT
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
+          echo "repo=$REPO" >> $GITHUB_ENV
 
-        # Set outputs
-        echo "repo=$REPO" >> $GITHUB_OUTPUT
-        echo "team=$TEAM" >> $GITHUB_OUTPUT
+      - name: "Generate Github App Token"
+        uses: Aprende-com/devops-workflows/actions/generate-github-token@main
+        id: app-token
+        with:
+          secret_key: ${{ secrets.DEVOPS_APP_SECRET_KEY }}
+          app_id: ${{ secrets.DEVOPS_APP_ID }}
 
-    - uses: Aprende-com/devops-workflows/actions/slack-notify@main
-      if: failure()
-      with:
-        title: "Dependabot Jira issue creation for ${{ github.event.pull_request.html_url }}/checks: Failed"
-        status: 'failure'
+      - name: Label Security PRs
+        id: label_security
+        run: |
+          PR_BODY=$(curl -s -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} | jq -r .body)
+
+          if echo "$PR_BODY" | grep -q "Security"; then
+            SECURITY_VULNERABILITY="true"
+
+            curl -s -X POST -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels \
+              -d '{"labels":["security"]}'
+          else
+            SECURITY_VULNERABILITY="false"
+            SEVERITY="none"
+          fi
+
+          echo "SECURITY_VULNERABILITY=${SECURITY_VULNERABILITY}" >> $GITHUB_ENV
+          echo "SECURITY_VULNERABILITY=${SECURITY_VULNERABILITY}" >> $GITHUB_OUTPUT
+          echo "SEVERITY=${SEVERITY}" >> $GITHUB_ENV
+
+      - name: Fetch Security Alerts with Pagination
+        id: fetch_alerts
+        if: env.SECURITY_VULNERABILITY != 'false'
+        run: |
+          PAGE=1
+          ALERTS=()
+          while true; do
+            RESPONSE=$(curl -s -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
+              "https://api.github.com/repos/${{ github.repository }}/dependabot/alerts?page=$PAGE&per_page=100")
+            if [ "$(echo $RESPONSE | jq length)" -eq 0 ]; then
+              break
+            fi
+            ALERTS+=($RESPONSE)
+            PAGE=$((PAGE+1))
+          done
+          echo "${ALERTS[@]}" | jq -s 'add' > alerts.json
+          #cat alerts.json
+
+      - name: Extract Package Name
+        id: extract_package
+        if: env.SECURITY_VULNERABILITY != 'false'
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_TITLE=$(echo "$PR_TITLE" | sed -E 's/ and .*//;s/ from .*//')
+
+          PACKAGE_NAME=$(echo "$PR_TITLE" | grep -oP '(?<=Bump ).+')
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+
+      - name: Analyze Alerts for Severity
+        id: analyze_alerts
+        if: env.SECURITY_VULNERABILITY != 'false'
+        run: |
+          SEVERITY=$(jq -r --arg package "$PACKAGE_NAME" '.[] | select(.security_vulnerability and .security_vulnerability.package.name == $package) | .security_vulnerability.severity' alerts.json | head -n 1 | tr -d '\n')
+          echo "SEVERITY=$SEVERITY" >> $GITHUB_ENV
+          echo "SEVERITY=$SEVERITY" >> $GITHUB_OUTPUT
+
+      - name: Label PR based on Severity
+        if: env.SECURITY_VULNERABILITY != 'false'
+        run: |
+          if [[ "${{ env.SEVERITY }}" != "" ]]; then
+            LABEL="${{ env.SEVERITY }}"
+            curl -s -X POST -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels \
+              -d "{\"labels\":[\"$LABEL\"]}"
+          fi
+
+      - name: Determine type
+        id: determine_type
+        run: |
+          if [[ ${{ env.SECURITY_VULNERABILITY }} == 'true' ]]; then
+            echo "TYPE=Security" >> ${GITHUB_OUTPUT}
+            echo "TYPE=Security" >> ${GITHUB_ENV}
+          else
+            echo "TYPE=Dependency" >> ${GITHUB_OUTPUT}
+            echo "TYPE=Dependency" >> ${GITHUB_ENV}
+          fi
+
+      - name: Determine priority
+        id: determine_priority
+        run: |
+          if [[ ${{ env.TYPE }} == 'Dependency' || ${{ env.SEVERITY }} == 'low' ]]; then
+            echo "PRIORITY=Low - Not Urgent+Important" >> ${GITHUB_OUTPUT}
+          elif [[ ${{ env.SEVERITY }} == 'medium' ]]; then
+            echo "PRIORITY=Medium - Urgent+Not Important" >> ${GITHUB_OUTPUT}
+          elif [[ ${{ env.SEVERITY }} == 'high' || ${{ env.SEVERITY }} == 'critical' ]]; then
+            echo "PRIORITY=High - Urgent+Important" >> ${GITHUB_OUTPUT}
+          else
+            echo "Unable to determine priority"
+          fi
+
+      - uses: Aprende-com/devops-workflows/actions/slack-notify@main
+        if: failure()
+        with:
+          title: "Dependabot Jira issue creation for ${{ github.event.pull_request.html_url }}/checks: Failed"
+          status: 'failure'
 
   create_issue:
     needs: config
@@ -46,7 +149,13 @@ jobs:
       title: ${{ github.event.pull_request.title }}
       url: ${{ github.event.pull_request.html_url }}
       team: ${{ needs.config.outputs.team }}
-      fields: '{"customfield_10126": {"id": "10131"}, "customfield_10125": [{"id": "10136"}]}'
+      fields: |
+        {
+          "customfield_10126": {"id": "10131"},
+          "customfield_10125": [{"id": "10136"}],
+          "labels": ["${{ needs.config.outputs.type }}", "${{ needs.config.outputs.severity }}"],
+          "priority": {"name": "${{ needs.config.outputs.priority }}"}
+        }
     secrets:
-       JIRA_USER: ${{ secrets.JIRA_USER }}
-       JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+      JIRA_USER: ${{ secrets.JIRA_USER }}
+      JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
