@@ -32,6 +32,7 @@ jobs:
         with:
           secret_key: ${{ secrets.DEVOPS_APP_SECRET_KEY }}
           app_id: ${{ secrets.DEVOPS_APP_ID }}
+          repositories: "moodle-dev"
 
       - uses: Aprende-com/devops-workflows/actions/lms/plugin/getpath@main
         with:
@@ -63,6 +64,7 @@ jobs:
         with:
           secret_key: ${{ secrets.DEVOPS_APP_SECRET_KEY }}
           app_id: ${{ secrets.DEVOPS_APP_ID }}
+          repositories: "moodle-dev,devops-workflows,${{ env.PLUGIN_REPO }}"
 
       - name: "cloning moodle-dev"
         uses: Aprende-com/devops-workflows/actions/lms/core-clone@main

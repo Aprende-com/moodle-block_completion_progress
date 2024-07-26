@@ -68,6 +68,7 @@ jobs:
         with:
           secret_key: ${{ secrets.DEVOPS_APP_SECRET_KEY }}
           app_id: ${{ secrets.DEVOPS_APP_ID }}
+          repositories: "moodle-dev,${{ env.PLUGIN_REPO }}"
 
       - name: "moodle-dev: clone"
         uses: actions/checkout@v4
